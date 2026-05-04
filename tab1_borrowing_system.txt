@@ -1,0 +1,77 @@
+# --- 分頁 1 邏輯：人事資料借閱系統 ---
+
+def setup_tab1(self):
+    title_label = tk.Label(self.tab1, text="人事資料借閱系統", font=("Microsoft JhengHei", 20, "bold"), pady=10)
+    title_label.pack()
+
+    input_frame = tk.LabelFrame(self.tab1, text="新增調閱紀錄", font=("Microsoft JhengHei", 12), padx=20, pady=10)
+    input_frame.pack(fill="x", padx=20, pady=5)
+
+    self.entries_tab1 = {}
+    fields = [
+        ("日期", 0, 0, datetime.now().strftime("%Y%m%d")),
+        ("調閱人", 0, 2, ""),
+        ("單位", 1, 0, ""),
+        ("被調閱名單", 1, 2, ""),
+        ("備註", 2, 0, "")
+    ]
+
+    for text, row, col, default in fields:
+        tk.Label(input_frame, text=text + ":", font=("Microsoft JhengHei", 10)).grid(row=row, column=col, sticky="e", padx=5, pady=5)
+        entry = tk.Entry(input_frame, font=("Microsoft JhengHei", 10), width=25)
+        entry.insert(0, default)
+        entry.grid(row=row, column=col+1, padx=5, pady=5)
+        self.entries_tab1[text] = entry
+
+    tk.Label(input_frame, text="歸還:", font=("Microsoft JhengHei", 10)).grid(row=2, column=2, sticky="e", padx=5, pady=5)
+    self.return_status = ttk.Combobox(input_frame, values=["Y", "N"], width=23, state="readonly")
+    self.return_status.set("Y")
+    self.return_status.grid(row=2, column=3, padx=5, pady=5)
+
+    btn_frame = tk.Frame(self.tab1)
+    btn_frame.pack(pady=5)
+    tk.Button(btn_frame, text="新增紀錄", command=self.add_record_tab1, bg="#4CAF50", fg="white", font=("Microsoft JhengHei", 10, "bold"), padx=20).grid(row=0, column=0, padx=10)
+    tk.Button(btn_frame, text="歸檔註記", command=self.mark_as_archived, bg="#FF9800", fg="white", font=("Microsoft JhengHei", 10, "bold"), padx=20).grid(row=0, column=1, padx=10)
+    tk.Button(btn_frame, text="清除輸入", command=self.clear_fields_tab1, font=("Microsoft JhengHei", 10), padx=20).grid(row=0, column=2, padx=10)
+
+    search_frame = tk.LabelFrame(self.tab1, text="快速查詢", font=("Microsoft JhengHei", 12), padx=20, pady=5)
+    search_frame.pack(fill="x", padx=20, pady=5)
+    self.search_entry_tab1 = tk.Entry(search_frame, font=("Microsoft JhengHei", 10), width=30)
+    self.search_entry_tab1.pack(side="left", padx=5)
+    tk.Button(search_frame, text="搜尋", command=lambda: self.perform_search(self.tree1, self.file_path_tab1, self.search_entry_tab1, self.columns_tab1), bg="#2196F3", fg="white").pack(side="left", padx=5)
+    tk.Button(search_frame, text="顯示全部", command=lambda: self.load_data_to_tree(self.tree1, self.file_path_tab1, self.columns_tab1)).pack(side="left", padx=5)
+
+    self.tree1 = self.create_treeview(self.tab1, self.columns_tab1)
+    self.load_data_to_tree(self.tree1, self.file_path_tab1, self.columns_tab1)
+
+def add_record_tab1(self):
+    data = {col: self.entries_tab1[col].get() for col in self.entries_tab1}
+    data["歸還"] = self.return_status.get()
+    if not data["調閱人"] or not data["被調閱名單"]:
+        messagebox.showwarning("警告", "請填寫調閱人與名單！")
+        return
+    self.save_to_excel(self.file_path_tab1, data, self.tree1, self.columns_tab1)
+    self.clear_fields_tab1()
+
+def clear_fields_tab1(self):
+    for entry in self.entries_tab1.values(): entry.delete(0, tk.END)
+    self.entries_tab1["日期"].insert(0, datetime.now().strftime("%Y%m%d"))
+    self.return_status.set("Y")
+
+def mark_as_archived(self):
+    selected = self.tree1.selection()
+    if not selected:
+        messagebox.showwarning("警告", "請先選擇紀錄！")
+        return
+    new_remark = simpledialog.askstring("歸檔註記", "請輸入歸檔備註:")
+    if new_remark is None: return
+    try:
+        df = pd.read_excel(self.file_path_tab1)
+        for item_id in selected:
+            idx = int(item_id)
+            df.at[idx, "歸還"] = "Y"
+            df.at[idx, "備註"] = new_remark
+        df.to_excel(self.file_path_tab1, index=False)
+        self.load_data_to_tree(self.tree1, self.file_path_tab1, self.columns_tab1)
+    except Exception as e:
+        messagebox.showerror("錯誤", f"更新失敗: {e}")
