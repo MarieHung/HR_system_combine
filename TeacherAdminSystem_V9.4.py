@@ -864,7 +864,7 @@ class TeacherStatsApp:
         item_f = ttk.LabelFrame(main, text="2. 勾選項目", padding=10); item_f.pack(fill=tk.X, pady=5)
         self.item_vars = {}
         item_grid = ttk.Frame(item_f); item_grid.pack(fill=tk.X)
-        data_items = ["姓名", "服務單位", "一級單位", "身分證統一編號", "職稱", "性別", "薪點", "最高學位", "出生年月日", "到校日期", "服務本校年資", "EMI", "本校電子信箱", "校外電子信箱", "留職停薪", "帶職帶薪"]
+        data_items = ["姓名", "服務單位", "一級單位", "身分證統一編號", "職稱", "性別", "薪點", "最高學位", "出生年月日", "到校日期", "服務本校年資", "EMI", "本校電子信箱", "校外電子信箱", "留職停薪", "帶職帶薪","國籍","雙重國籍"]
         for i, item in enumerate(data_items):
             var = tk.BooleanVar(); self.item_vars[item] = var
             ttk.Checkbutton(item_grid, text=item, variable=var).grid(row=i//4, column=i%4, sticky=tk.W, padx=10, pady=2)
